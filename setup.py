@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="lambdata-ekoly",
-    version = "0.1.3",
+    version = "0.1.7",
     author = "ekoly",
     description = "a collection of data science helper functions",
     long_description = LONG_DESCRIPTION,

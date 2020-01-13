@@ -2,11 +2,13 @@
     Utility functions for working with dataframes
 """
 
-import pandas
+import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
+from scipy.stats import t, ttest_1samp
 
 
-TEST_DF = pandas.DataFrame([1, 2, 3])
+TEST_DF = pd.DataFrame([1, 2, 3])
 
 
 def train_validate_test_split(df, train_size=0.6):

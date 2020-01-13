@@ -9,6 +9,7 @@ twine = "*"
 [packages]
 numpy = "*"
 pandas = "*"
+sklearn = "*"
 
 [requires]
 python_version = "3.6"
