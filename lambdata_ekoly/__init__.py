@@ -6,4 +6,4 @@ import pandas as pd
 import numpy as np
 
 ONES = pd.DataFrame(np.ones(50))
-ZEROES = pd.DataFrame(np.zeros(50))
+ZEROS = pd.DataFrame(np.zeros(50))
