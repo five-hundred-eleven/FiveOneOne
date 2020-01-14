@@ -5,10 +5,31 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from scipy.stats import t, ttest_1samp
+from scipy.stats import t, ttest_1samp, ttest_ind
 
 
-TEST_DF = pd.DataFrame([1, 2, 3])
+
+class ColumnCompare:
+    """
+        Class for comparing columns in two dataframes {x1} and {x2}.
+        Initialize with two dataframes and then run test(column_name}
+        to see if there is a statistically significant difference.
+    """
+
+    def __init__(self, x1, x2):
+        """
+          @type x1: DataFrame
+          @type x2: DataFrame
+        """
+        self.__x1 = x1
+        self.__x2 = x2
+
+    def test(self, column_name):
+        """
+          @type column_name: str
+          @return: Ttest_indResult of the result of the test for the given column.
+        """
+        return ttest_ind(self.__x1[column_name], self.__x2[column_name], nan_policy="omit")
 
 
 def train_validate_test_split(df, train_size=0.6):
