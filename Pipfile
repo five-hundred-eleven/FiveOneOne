@@ -11,6 +11,7 @@ numpy = "*"
 pandas = "*"
 sklearn = "*"
 scikit-learn = "*"
+unittest = "*"
 
 [requires]
 python_version = "3.6"
