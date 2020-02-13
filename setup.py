@@ -5,20 +5,21 @@ import setuptools
 
 REQUIRED = [
     "numpy",
-    "pandas"
+    "pandas",
+    "spacy",
 ]
 
 with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()
 
 setuptools.setup(
-    name="lambdata-ekoly",
-    version = "0.1.10",
+    name="five-one-one",
+    version = "0.2.0",
     author = "ekoly",
     description = "a collection of data science helper functions",
     long_description = LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://lambdaschool.com/courses/data-science",
+    url="https://datascience.stromsy.com/",
     packages=setuptools.find_packages(),
     python_requires=">=3.5",
     install_requires = REQUIRED,
