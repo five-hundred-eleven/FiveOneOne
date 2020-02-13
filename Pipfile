@@ -11,7 +11,8 @@ numpy = "*"
 pandas = "*"
 sklearn = "*"
 scikit-learn = "*"
-unittest = "*"
+spacy = "*"
+setuptools = "*"
 
 [requires]
 python_version = "3.6"

@@ -7,3 +7,6 @@ Install with:
 
 Import with:
 `import lambdata_ekoly`
+
+If you are building the module, use:
+`python3 setup.py sdist bdist_wheel`

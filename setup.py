@@ -5,15 +5,16 @@ import setuptools
 
 REQUIRED = [
     "numpy",
-    "pandas"
+    "pandas",
+    "spacy",
 ]
 
 with open("README.md", "r") as fh:
     LONG_DESCRIPTION = fh.read()
 
 setuptools.setup(
-    name="lambdata-ekoly",
-    version = "0.1.10",
+    name="FiveOneOne",
+    version = "0.2.0",
     author = "ekoly",
     description = "a collection of data science helper functions",
     long_description = LONG_DESCRIPTION,
