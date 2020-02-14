@@ -14,7 +14,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="five-one-one",
-    version = "0.2.2",
+    version = "0.2.3",
     author = "ekoly",
     description = "a collection of data science helper functions",
     long_description = LONG_DESCRIPTION,

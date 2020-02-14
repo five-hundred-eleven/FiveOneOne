@@ -46,7 +46,7 @@ def html_tokenize(doc):
         @type doc: str
         @rtype: List[str]
     """
-    stripped = BeautifulSoup(doc).stripped_strings
+    stripped = " ".join(BeautifulSoup(doc).stripped_strings)
     return simple_tokenize(stripped)
 
 
