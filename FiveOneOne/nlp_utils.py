@@ -3,6 +3,8 @@
 from collections import Counter
 import re
 
+from bs4 import BeautifulSoup
+
 import spacy
 from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
@@ -23,10 +25,29 @@ def set_nlp(custom_nlp):
 
 
 def simple_tokenize(doc):
+    """
+        Takes a document and returns a list of tokens (simplified lowercase words).
+        This version of the method assumes the doc is already relatively clean
+        and will not handle html tags or extraneous characters.
+
+        @type doc: str
+        @rtype: List[str]
+    """
     return [
         re.sub(r"[^a-z0-9]", "", t.lemma_.lower()).strip() for t in __tokenizer(doc)
         if not t.is_stop and not t.is_punct and t.text.strip()
     ]
+
+
+def html_tokenize(doc):
+    """
+        Takes a document and returns a list of tokens (simplified lowercase words).
+
+        @type doc: str
+        @rtype: List[str]
+    """
+    stripped = BeautifulSoup(doc).stripped_strings
+    return simple_tokenize(stripped)
 
 
 class Scrubber:
