@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
+from collections import Counter
+import re
+
 import spacy
 from spacy.tokenizer import Tokenizer
 from spacy.lang.en import English
 
 __nlp = English()
-__tokenizer = Tokenizer(nlp.vocab)
+__tokenizer = Tokenizer(__nlp.vocab)
 
 def set_nlp(custom_nlp):
     """
@@ -83,7 +86,8 @@ class Scrubber:
             @type docs: List[str]
             @rtype: List[List[str]]
         """
-        return self.__trans
+        cleaned = [simple_tokenize(doc) for doc in docs]
+        return self.__transform(cleaned)
 
 
     def fit(self, docs):
@@ -108,8 +112,9 @@ class Scrubber:
             if pct < self.__min_pct or self.__max_pct < pct:
                 continue
             vocab.add(word)
-        
-        return [s for s in cleaned if s in word]
+
+        return [[s for s in doc if s in vocab]
+                for doc in cleaned if doc]
 
 
     def __fit(self, docs):
@@ -119,4 +124,5 @@ class Scrubber:
         cleaned = [simple_tokenize(doc) for doc in docs]
 
         self.__counter = Counter()
-        return [self.__counter.update(s) for s in cleaned]
+        [self.__counter.update(s) for s in cleaned]
+        return cleaned
