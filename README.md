@@ -9,5 +9,7 @@ Import with:
 `import FiveOneOne`
 
 Build with:
-`python3 setup.py sdist bdist_wheel`
-`twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+```
+python3 setup.py sdist bdist_wheel
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+```
