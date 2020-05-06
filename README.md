@@ -1,6 +1,5 @@
-# Lambdata
-
-This is a collection of pandas dataframe related utility methods.
+# Five One One
+This is a collection of data science related utility methods.
 
 Install with:
 `pip install -i https://test.pypi.org/simple/ five-one-one`
