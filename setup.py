@@ -1,5 +1,5 @@
 """
-lambdata - a collection of data science helper functions for lambda school
+A collection of utility functions
 """
 import setuptools
 
@@ -9,19 +9,20 @@ REQUIRED = [
     "spacy",
 ]
 
-with open("README.md", "r") as fh:
-    LONG_DESCRIPTION = fh.read()
+with open("README.md", "r") as f:
+    LONG_DESCRIPTION = f.read()
 
 setuptools.setup(
-    name="FiveOneOne",
-    version = "0.2.0",
-    author = "ekoly",
+    name="five-one-one",
+    version = "1.1.1",
+    author = "ecowley",
+    author_email = "erik@stromsy.com",
     description = "a collection of data science helper functions",
     long_description = LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://lambdaschool.com/courses/data-science",
+    url="https://datascience.stromsy.com",
     packages=setuptools.find_packages(),
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     install_requires = REQUIRED,
     classifiers=["Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
