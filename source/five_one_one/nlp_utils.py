@@ -6,11 +6,8 @@ import re
 from bs4 import BeautifulSoup
 
 import spacy
-from spacy.tokenizer import Tokenizer
-from spacy.lang.en import English
 
-__nlp = English()
-__tokenizer = Tokenizer(__nlp.vocab)
+__nlp = spacy.load("en_core_web_sm")
 
 def set_nlp(custom_nlp):
     """
@@ -19,9 +16,8 @@ def set_nlp(custom_nlp):
         spacy.load("en_core_web_lg")
         You can set it here.
     """
-    global __nlp, __tokenizer
+    global __nlp
     __nlp = custom_nlp
-    __tokenizer = Tokenizer(custom_nlp.vocab)
 
 
 def simple_tokenize(doc):
@@ -34,7 +30,7 @@ def simple_tokenize(doc):
         @rtype: List[str]
     """
     return [
-        re.sub(r"[^a-z0-9]", "", t.lemma_.lower()).strip() for t in __tokenizer(doc)
+        re.sub(r"[^a-z0-9]", "", t.lemma_.lower()).strip() for t in __nlp(doc)
         if not t.is_stop and not t.is_punct and t.text.strip()
     ]
 
