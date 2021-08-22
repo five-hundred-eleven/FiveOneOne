@@ -1,14 +1,6 @@
 """
-lamdata - a collection of data science helper functions
+    basic utility functions
 """
-
-import pandas as pd
-import numpy as np
-
-ONES = pd.DataFrame(np.ones(50))
-ZEROS = pd.DataFrame(np.zeros(50))
-NANS = pd.DataFrame([np.NaN for _ in range(50)])
-
 def is_python_version(*args):
     """
         Checks that the version of python being used is equal or higher than
