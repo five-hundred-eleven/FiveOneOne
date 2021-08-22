@@ -31,12 +31,12 @@ static PyMethodDef FputsMethods[] = {
 
 static struct PyModuleDef fibmodule = {
     PyModuleDef_HEAD_INIT,
-    "cfib",
+    "c",
     "Python interface for the fib C function.",
     -1,
     FputsMethods,
 };
 
-PyMODINIT_FUNC PyInit_cfib(void) {
+PyMODINIT_FUNC PyInit_c(void) {
     return PyModule_Create(&fibmodule);
 }
