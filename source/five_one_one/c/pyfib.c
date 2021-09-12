@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <numpy/ndarraytypes.h>
 
 static PyObject *method_cfib(PyObject *self, PyObject *args) {
 
@@ -6,6 +7,9 @@ static PyObject *method_cfib(PyObject *self, PyObject *args) {
 
     // parse args
     if (!PyArg_ParseTuple(args, "i", &x)) {
+        // normally you would have to set the error string (PyErr_SetString())
+        // when returning NULL
+        // In this case PyArg_ParseTuple() sets the error string
         return NULL;
     }
 
@@ -24,8 +28,20 @@ static PyObject *method_cfib(PyObject *self, PyObject *args) {
 
 }
 
+static PyObject *method_npfib(PyObject *self, PyObject *args) {
+
+    int x;
+
+    // parse args
+    if (!PyArg_ParseTuple(args, "i", &x)) {
+        return NULL;
+    }
+
+}
+
 static PyMethodDef FputsMethods[] = {
-    {"cfib", method_cfib, METH_VARARGS, "Fibonacci function implemented in C.",},
+    {"cfib", method_cfib, METH_VARARGS, "Fibonacci function that returns the xth element of the sequence, implemented in C.",},
+    {"npfib", method_npfib, METH_VARARGS, "Fibonacci function that returns an np.array containing the sequence up to x, implemented in C."},
     {NULL, NULL, 0, NULL,},
 };
 
