@@ -16,7 +16,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="five-one-one",
-    version="1.5.4",
+    version="1.5.7",
     author="ecowley",
     author_email="erik@stromsy.com",
     description="a collection of data science helper functions",
@@ -32,7 +32,7 @@ setuptools.setup(
     ext_modules=[
         setuptools.Extension(
             "five_one_one.c",
-            ["source/five_one_one/c/pyfib.c",],
+            ["c/pyfib.c",],
         ),
     ],
     python_requires=">=3.7",
