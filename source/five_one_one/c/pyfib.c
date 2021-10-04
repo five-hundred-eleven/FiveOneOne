@@ -1,5 +1,7 @@
 #include <Python.h>
-#include <numpy/ndarraytypes.h>
+
+
+static PyObject *_numpy = NULL;
 
 static PyObject *method_cfib(PyObject *self, PyObject *args) {
 
@@ -30,12 +32,42 @@ static PyObject *method_cfib(PyObject *self, PyObject *args) {
 
 static PyObject *method_npfib(PyObject *self, PyObject *args) {
 
+    if (_numpy == NULL) {
+        _numpy = PyImport_ImportModuleNoBlock("numpy");
+        if (_numpy == NULL) {
+            PyErr_SetString(PyExc_ImportError, "Could not import numpy");
+            return NULL;
+        }
+    }
+
     int x;
 
-    // parse args
     if (!PyArg_ParseTuple(args, "i", &x)) {
         return NULL;
     }
+
+    PyObject *builder = PyObject_CallMethod(_numpy, "zeros", "is", x, "int64");
+
+    if (x >= 1) {
+        PyObject_SetItem(builder, Py_BuildValue("i", 0), PyLong_FromLong(1));
+    }
+
+    if (x >= 2) {
+        PyObject_SetItem(builder, Py_BuildValue("i", 1), PyLong_FromLong(1));
+    }
+
+    long a = 1, b = 1, tmp;
+    for (int i = 2; i < x; i++) {
+
+        tmp = b;
+        b = a+b;
+        a = tmp;
+
+        PyObject_SetItem(builder, Py_BuildValue("i", i), PyLong_FromLong(b));
+
+    }
+
+    return builder;
 
 }
 
