@@ -7,9 +7,11 @@ Install with:
 
 Import with:
 `import five_one_one`
+`from five_one_one.c import cfib`
+`from five_one_one.wrapper import Vector`
 
 If you are building the module, use:
-`python3 setup.py sdist bdist_wheel`
+`make`
 
 Upload with:
 `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
