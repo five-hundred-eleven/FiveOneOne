@@ -2,6 +2,7 @@
 A collection of utility functions
 """
 import setuptools
+from Cython.Build import cythonize
 
 REQUIRED = [
     "beautifulsoup4",
@@ -16,7 +17,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="five-one-one",
-    version="1.5.7",
+    version="1.6.11",
     author="ecowley",
     author_email="erik@stromsy.com",
     description="a collection of data science helper functions",
@@ -34,7 +35,13 @@ setuptools.setup(
             "five_one_one.c",
             ["c/pyfib.c",],
         ),
-    ],
+    ] + cythonize([
+        setuptools.Extension(
+            "five_one_one.wrapper",
+            ["c/vector.pyx",],
+            language="c++",
+        )
+    ]),
     python_requires=">=3.7",
     install_requires=REQUIRED,
     classifiers=["Programming Language :: Python :: 3",

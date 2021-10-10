@@ -67,6 +67,8 @@ static PyObject *method_npfib(PyObject *self, PyObject *args) {
 
     }
 
+    Py_DECREF(_numpy);
+
     return builder;
 
 }
