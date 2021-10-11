@@ -16,7 +16,7 @@ cdef class Vector:
         cdef int ix
         
         if len(args) == 0:
-            pass
+            return
         elif len(args) == 1:
             other = args[0]
             for x in other:
@@ -24,6 +24,10 @@ cdef class Vector:
                 self.vector_ptr.push_back(ix)
         else:
             raise TypeError()
+
+
+    cdef void replace_internal(self, vector[int] *other):
+        self.vector_ptr = other
 
 
     def __dealloc__(self):
@@ -35,8 +39,10 @@ cdef class Vector:
 
 
     def __getitem__(self, int i):
-        if i < self.vector_ptr.size():
+        if 0 <= i and i < self.vector_ptr.size():
             return self.vector_ptr.at(i)
+        elif -self.vector_ptr.size() <= i and i < 0:
+            return self.vector_ptr.at(self.vector_ptr.size()+i)
         else:
             raise IndexError()
 
@@ -79,7 +85,6 @@ cdef class Vector:
 
 
     def sort(self, reverse=False):
-
         if not reverse:
             sort(self.vector_ptr.begin(), self.vector_ptr.end())
         else:
@@ -96,6 +101,103 @@ cdef class Vector:
 
         del self.vector_ptr
         self.vector_ptr = reversed
+
+
+    def remove(self, int x):
+        cdef int i
+        while i < self.vector_ptr.size():
+            if self.vector_ptr.at(i) == x:
+                self.vector_ptr.erase(self.vector_ptr.begin()+i)
+                return
+            i += 1
+        raise ValueError()
+
+
+    def insert(self, int i, int x):
+        if i < self.vector_ptr.size():
+           self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
+        else:
+            raise IndexError()
+
+
+    def clear(self):
+        del self.vector_ptr
+        self.vector_ptr = new vector[int]()
+
+
+    def count(self, int x):
+        cdef int i
+        res = 0
+        while i < self.vector_ptr.size():
+            if self.vector_ptr.at(i) == x:
+                res += 1
+            i += 1
+        return res
+
+
+    def slice(self, *args):
+        cdef int i, j, k, step
+        cdef vector[int] *slice_ptr
+        print(args)
+        if len(args) == 1:
+            if 0 <= i and i < self.vector_ptr.size():
+                return self.vector_ptr.at(i)
+            elif -self.vector_ptr.size() <= i and i < 0:
+                return self.vector_ptr.at(self.vector_ptr.size()+i)
+            else:
+                raise IndexError()
+        elif len(args) == 2:
+            i = args[0] if args[0] is not None else 0
+            j = args[1] if args[1] is not None else self.vector_ptr.size()
+            if i < 0:
+                i = self.vector_ptr.size() + i
+            if j < 0:
+                j = self.vector_ptr.size() + j
+            if (
+                0 <= i and
+                i <= j and
+                j < self.vector_ptr.size()
+            ):
+                slice_ptr = new vector[int](j-i)
+                k = 0
+                while i+k < j:
+                    slice_ptr.assign(
+                        k,
+                        self.vector_ptr.at(i+k),
+                    )
+                    k += 1
+                slice_v = Vector()
+                slice_v.replace_internal(slice_ptr)
+                return slice_v
+            else:
+                raise IndexError()
+        elif len(args) == 3:
+            i = args[0] if args[0] is not None else 0
+            j = args[1] if args[1] is not None else self.vector_ptr.size()
+            step = args[2] if args[2] is not None else 1
+            if i < 0:
+                i = self.vector_ptr.size() + i
+            if j < 0:
+                j = self.vector_ptr.size() + j
+            if (
+                0 <= i and
+                i <= j and
+                j < self.vector_ptr.size()
+            ):
+                slice_ptr = new vector[int]()
+                if step > 0:
+                    while i < j:
+                        slice_ptr.push_back(self.vector_ptr.at(i))
+                        i += step
+                elif step < 0:
+                    while i <= j:
+                        slice_ptr.push_back(self.vector_ptr.at(j))
+                        j += step
+                slice_v = Vector()
+                slice_v.replace_internal(slice_ptr)
+                return slice_v
+            else:
+                raise IndexError()
 
 
     def __str__(self):
