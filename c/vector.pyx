@@ -12,7 +12,6 @@ cdef class Vector:
 
     def __cinit__(self, *args):
         self.vector_ptr = new vector[int]();
-        cdef unsigned i
         cdef int ix
         
         if len(args) == 0:
@@ -39,17 +38,27 @@ cdef class Vector:
 
 
     def __getitem__(self, int i):
-        if 0 <= i and i < self.vector_ptr.size():
+        cdef int size = self.vector_ptr.size()
+        print(i, size)
+        if 0 <= i and i < size:
+            print("if 0 <= i and i < size:")
             return self.vector_ptr.at(i)
-        elif -self.vector_ptr.size() <= i and i < 0:
-            return self.vector_ptr.at(self.vector_ptr.size()+i)
+        elif -size <= i and i < 0:
+            print("elif -size <= i and i < 0:")
+            return self.vector_ptr.at(size+i)
         else:
+            print("index error")
             raise IndexError()
 
 
     def __setitem__(self, int i, int x):
-        if i < self.vector_ptr.size():
-            self.vector_ptr.assign(i, x)
+        cdef int size = self.vector_ptr.size()
+        if 0 <= i and i < size:
+            self.vector_ptr.erase(self.vector_ptr.begin()+i)
+            self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
+        elif -size <= i and i < 0:
+            self.vector_ptr.erase(self.vector_ptr.begin()+size+i)
+            self.vector_ptr.insert(self.vector_ptr.begin()+size+i, x)
         else:
             raise IndexError()
 
@@ -59,9 +68,10 @@ cdef class Vector:
 
 
     def pop(self, *args):
-        cdef int item, pos
+        cdef int item, pos, size
+        size = self.vector_ptr.size()
         if len(args) == 0:
-            if self.vector_ptr.size() > 0:
+            if size > 0:
                 item = self.vector_ptr.back()
                 self.vector_ptr.pop_back()
                 return item
@@ -69,9 +79,13 @@ cdef class Vector:
                 raise IndexError("pop from empty vector")
         elif len(args) == 1:
             pos = args[0]
-            if self.vector_ptr.size() > pos:
+            if 0 <= pos and pos < size:
                 item = self.vector_ptr.at(pos)
                 self.vector_ptr.erase(self.vector_ptr.begin()+pos)
+                return item
+            elif -size <= pos and pos < 0:
+                item = self.vector_ptr.at(size+pos)
+                self.vector_ptr.erase(self.vector_ptr.begin()+size+pos)
                 return item
             else:
                 raise IndexError("pop index out of range")
@@ -94,17 +108,15 @@ cdef class Vector:
     def reverse(self):
         cdef vector[int] *reversed = new vector[int]()
         cdef int i = 0
-        reversed.reserve(self.vector_ptr.size())
         while i < self.vector_ptr.size():
-            reversed.assign(self.vector_ptr.size() - i - 1, self.vector_ptr.at(i))
+            reversed.push_back(self.vector_ptr.at(self.vector_ptr.size() - i - 1))
             i += 1
-
         del self.vector_ptr
         self.vector_ptr = reversed
 
 
     def remove(self, int x):
-        cdef int i
+        cdef unsigned i = 0
         while i < self.vector_ptr.size():
             if self.vector_ptr.at(i) == x:
                 self.vector_ptr.erase(self.vector_ptr.begin()+i)
@@ -126,7 +138,7 @@ cdef class Vector:
 
 
     def count(self, int x):
-        cdef int i
+        cdef unsigned i = 0
         res = 0
         while i < self.vector_ptr.size():
             if self.vector_ptr.at(i) == x:
@@ -135,11 +147,20 @@ cdef class Vector:
         return res
 
 
+    def index(self, int x):
+        cdef unsigned i = 0
+        while i < self.vector_ptr.size():
+            if self.vector_ptr.at(i) == x:
+                return i
+            i += 1
+        raise ValueError()
+
+
     def slice(self, *args):
         cdef int i, j, k, step
         cdef vector[int] *slice_ptr
-        print(args)
         if len(args) == 1:
+            i = args[0]
             if 0 <= i and i < self.vector_ptr.size():
                 return self.vector_ptr.at(i)
             elif -self.vector_ptr.size() <= i and i < 0:
@@ -158,13 +179,10 @@ cdef class Vector:
                 i <= j and
                 j < self.vector_ptr.size()
             ):
-                slice_ptr = new vector[int](j-i)
+                slice_ptr = new vector[int]()
                 k = 0
                 while i+k < j:
-                    slice_ptr.assign(
-                        k,
-                        self.vector_ptr.at(i+k),
-                    )
+                    slice_ptr.push_back(self.vector_ptr.at(i+k))
                     k += 1
                 slice_v = Vector()
                 slice_v.replace_internal(slice_ptr)
@@ -182,17 +200,26 @@ cdef class Vector:
             if (
                 0 <= i and
                 i <= j and
-                j < self.vector_ptr.size()
+                j < self.vector_ptr.size() and
+                step > 0
             ):
                 slice_ptr = new vector[int]()
-                if step > 0:
-                    while i < j:
-                        slice_ptr.push_back(self.vector_ptr.at(i))
-                        i += step
-                elif step < 0:
-                    while i <= j:
-                        slice_ptr.push_back(self.vector_ptr.at(j))
-                        j += step
+                while i < j:
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                    i += step
+                slice_v = Vector()
+                slice_v.replace_internal(slice_ptr)
+                return slice_v
+            elif (
+                0 <= j and
+                j <= i and
+                i < self.vector_ptr.size() and
+                step < 0
+            ):
+                slice_ptr = new vector[int]()
+                while i > j:
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                    i += step
                 slice_v = Vector()
                 slice_v.replace_internal(slice_ptr)
                 return slice_v
