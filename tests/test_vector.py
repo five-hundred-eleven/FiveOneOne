@@ -56,14 +56,12 @@ class test_vector(unittest.TestCase):
     def test_setitem_0(self):
         l = list(range(5))
         v = Vector(l)
-
         v[0] = 99
         self.assertEqual(v[0], 99)
 
     def test_setitem_neg_1(self):
         l = list(range(5))
         v = Vector(l)
-
         v[-1] = 99
         self.assertEqual(v[-1], 99)
 
@@ -91,3 +89,42 @@ class test_vector(unittest.TestCase):
         for _ in range(100):
             v.append(5)
         self.assertTrue(all(x == 5 for x in v))
+
+    def test_pop_1_el(self):
+        v = Vector([1])
+        res = v.pop()
+        self.assertEqual(res, 1)
+        self.assertEqual(len(v), 0)
+
+    def test_pop_2_el(self):
+        v = Vector([1, 2])
+        res = v.pop()
+        self.assertEqual(res, 2)
+        self.assertEqual(len(v), 1)
+
+    def test_pop_from_empty_list(self):
+        v = Vector()
+        with self.assertRaises(IndexError):
+            v.pop()
+
+    def test_pop_multiple_args(self):
+        v = Vector
+        with self.assertRaises(TypeError):
+            v.pop("foo", "bar")
+
+    def test_pop_1_pos_arg(self):
+        v = Vector([1, 2, 3])
+        res = v.pop(1)
+        self.assertEqual(res, 2)
+        self.assertEqual(len(v), 2)
+
+    def test_pop_1_neg_arg(self):
+        v = Vector([1, 2, 3])
+        res = v.pop(-1)
+        self.assertEqual(res, 3)
+        self.assertEqual(len(v), 2)
+
+    def test_pop_out_of_range(self):
+        v = Vector([1, 2, 3])
+        with self.assertRaises(IndexError):
+            v.pop(5)
