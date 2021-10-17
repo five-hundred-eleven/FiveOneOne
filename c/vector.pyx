@@ -10,9 +10,12 @@ cdef class Vector:
 
     cdef vector[int] *vector_ptr;
 
-    def __cinit__(self, *args):
-        self.vector_ptr = new vector[int]();
+    def __cinit__(self, *args, init_internal=True):
         cdef int ix
+        if init_internal:
+            self.vector_ptr = new vector[int]();
+        else:
+            return
         
         if len(args) == 0:
             return
@@ -39,26 +42,21 @@ cdef class Vector:
 
     def __getitem__(self, int i):
         cdef int size = self.vector_ptr.size()
-        print(i, size)
         if 0 <= i and i < size:
-            print("if 0 <= i and i < size:")
             return self.vector_ptr.at(i)
         elif -size <= i and i < 0:
-            print("elif -size <= i and i < 0:")
             return self.vector_ptr.at(size+i)
         else:
-            print("index error")
             raise IndexError()
 
 
     def __setitem__(self, int i, int x):
         cdef int size = self.vector_ptr.size()
+        cdef int *data = self.vector_ptr.data()
         if 0 <= i and i < size:
-            self.vector_ptr.erase(self.vector_ptr.begin()+i)
-            self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
+            data[i] = x
         elif -size <= i and i < 0:
-            self.vector_ptr.erase(self.vector_ptr.begin()+size+i)
-            self.vector_ptr.insert(self.vector_ptr.begin()+size+i, x)
+            data[size+i] = x
         else:
             raise IndexError()
 
@@ -126,8 +124,10 @@ cdef class Vector:
 
 
     def insert(self, int i, int x):
-        if i < self.vector_ptr.size():
-           self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
+        if 0 <= i and i <= self.vector_ptr.size():
+            self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
+        elif self.vector_ptr.size() <= i and i < 0:
+            self.vector_ptr.insert(self.vector_ptr.begin()+self.vector_ptr.size()+i, x)
         else:
             raise IndexError()
 
@@ -157,8 +157,7 @@ cdef class Vector:
 
 
     def slice(self, *args):
-        cdef int i, j, k, step
-        cdef vector[int] *slice_ptr
+        cdef int i, j
         if len(args) == 1:
             i = args[0]
             if 0 <= i and i < self.vector_ptr.size():
@@ -179,16 +178,13 @@ cdef class Vector:
                 i <= j and
                 j < self.vector_ptr.size()
             ):
-                slice_ptr = new vector[int]()
-                k = 0
-                while i+k < j:
-                    slice_ptr.push_back(self.vector_ptr.at(i+k))
-                    k += 1
-                slice_v = Vector()
-                slice_v.replace_internal(slice_ptr)
+                slice_v = Vector(init_internal=False)
+                slice_v.replace_internal(self._slice_single_step(i, j))
                 return slice_v
             else:
-                raise IndexError()
+                slice_v = Vector(init_internal=False)
+                slice_v.replace_internal(self._slice_irregular(i, j, 1))
+                return slice_v
         elif len(args) == 3:
             i = args[0] if args[0] is not None else 0
             j = args[1] if args[1] is not None else self.vector_ptr.size()
@@ -203,12 +199,8 @@ cdef class Vector:
                 j < self.vector_ptr.size() and
                 step > 0
             ):
-                slice_ptr = new vector[int]()
-                while i < j:
-                    slice_ptr.push_back(self.vector_ptr.at(i))
-                    i += step
                 slice_v = Vector()
-                slice_v.replace_internal(slice_ptr)
+                slice_v.replace_internal(self._slice_pos_step(i, j, step))
                 return slice_v
             elif (
                 0 <= j and
@@ -216,29 +208,84 @@ cdef class Vector:
                 i < self.vector_ptr.size() and
                 step < 0
             ):
-                slice_ptr = new vector[int]()
-                while i > j:
-                    slice_ptr.push_back(self.vector_ptr.at(i))
-                    i += step
                 slice_v = Vector()
-                slice_v.replace_internal(slice_ptr)
+                slice_v.replace_internal(self._slice_neg_step(i, j, step))
                 return slice_v
             else:
-                raise IndexError()
+                slice_v = Vector(init_internal=False)
+                slice_v.replace_internal(self._slice_irregular(i, j, step))
+                return slice_v
+
+
+    cdef vector[int] *_slice_single_step(self, int start, int stop):
+        cdef vector[int] *slice_ptr = new vector[int](stop - start)
+        cdef int *data = slice_ptr.data()
+        cdef int i = 0
+        while start+i < stop:
+            data[i] = self.vector_ptr.at(start+i)
+            i += 1
+        return slice_ptr
+
+
+    cdef vector[int] *_slice_pos_step(self, int start, int stop, int step):
+        cdef int size = (stop - start) // step
+        cdef vector[int] *slice_ptr = new vector[int](size)
+        cdef int *data = slice_ptr.data()
+        cdef int i, j
+        i = 0
+        j = start
+        while j < stop:
+            data[i] = self.vector_ptr.at(j)
+            i += 1
+            j += step
+        return slice_ptr
+
+
+    cdef vector[int] *_slice_neg_step(self, int start, int stop, int step):
+        cdef int size = (start - stop) // -step
+        cdef vector[int] *slice_ptr = new vector[int](size)
+        cdef int *data = slice_ptr.data()
+        cdef int i, j
+        i = 0
+        j = start
+        while j > stop:
+            data[i] = self.vector_ptr.at(j)
+            i += 1
+            j += step
+        return slice_ptr
+
+    cdef vector[int] *_slice_irregular(self, int start, int stop, int step):
+        cdef vector[int] *slice_ptr = new vector[int]()
+        cdef int i
+        if start < 0:
+            i = 0
+        elif start >= self.vector_ptr.size():
+            start = self.vector_ptr.size()-1
+        else:
+            i = start
+
+        if step > 0 and start < stop:
+            while i < stop:
+                if 0 <= i and i < self.vector_ptr.size():
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                else:
+                    break
+                i += step
+            return slice_ptr
+        elif step < 0 and start > stop:
+            while i > stop:
+                if 0 <= i and i < self.vector_ptr.size():
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                else:
+                    break
+                i += step
+            return slice_ptr
+        else:
+            return slice_ptr
 
 
     def __str__(self):
-        cdef int i = 0
-        res = "["
-
-        while i < self.vector_ptr.size():
-            res += str(self.vector_ptr.at(i))
-            res += ", "
-            i += 1
-
-        res += "]"
-
-        return res
+        return str(list(self))
 
 
     def __repr__(self):
