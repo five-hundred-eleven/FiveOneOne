@@ -3,8 +3,8 @@ import random
 
 from five_one_one.wrapper import Vector
 
-class test_vector(unittest.TestCase):
 
+class test_vector(unittest.TestCase):
     def assertVectorEqual(self, v1, v2):
         for m, n in zip(v1, v2):
             self.assertEqual(m, n)

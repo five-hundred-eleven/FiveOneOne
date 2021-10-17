@@ -105,7 +105,7 @@ cdef class Vector:
 
     def reverse(self):
         cdef vector[int] *reversed = new vector[int]()
-        cdef int i = 0
+        cdef unsigned i = 0
         while i < self.vector_ptr.size():
             reversed.push_back(self.vector_ptr.at(self.vector_ptr.size() - i - 1))
             i += 1
@@ -124,9 +124,10 @@ cdef class Vector:
 
 
     def insert(self, int i, int x):
-        if 0 <= i and i <= self.vector_ptr.size():
+        cdef int size = self.vector_ptr.size()
+        if 0 <= i and i <= size:
             self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
-        elif self.vector_ptr.size() <= i and i < 0:
+        elif -size <= i and i < 0:
             self.vector_ptr.insert(self.vector_ptr.begin()+self.vector_ptr.size()+i, x)
         else:
             raise IndexError()
@@ -157,26 +158,27 @@ cdef class Vector:
 
 
     def slice(self, *args):
-        cdef int i, j
+        cdef int i, j, size
+        size = self.vector_ptr.size()
         if len(args) == 1:
             i = args[0]
-            if 0 <= i and i < self.vector_ptr.size():
+            if 0 <= i and i < size:
                 return self.vector_ptr.at(i)
-            elif -self.vector_ptr.size() <= i and i < 0:
-                return self.vector_ptr.at(self.vector_ptr.size()+i)
+            elif -size <= i and i < 0:
+                return self.vector_ptr.at(size+i)
             else:
                 raise IndexError()
         elif len(args) == 2:
             i = args[0] if args[0] is not None else 0
-            j = args[1] if args[1] is not None else self.vector_ptr.size()
+            j = args[1] if args[1] is not None else size
             if i < 0:
-                i = self.vector_ptr.size() + i
+                i = size + i
             if j < 0:
-                j = self.vector_ptr.size() + j
+                j = size + j
             if (
                 0 <= i and
                 i <= j and
-                j < self.vector_ptr.size()
+                j < size
             ):
                 slice_v = Vector(init_internal=False)
                 slice_v.replace_internal(self._slice_single_step(i, j))
@@ -187,16 +189,16 @@ cdef class Vector:
                 return slice_v
         elif len(args) == 3:
             i = args[0] if args[0] is not None else 0
-            j = args[1] if args[1] is not None else self.vector_ptr.size()
+            j = args[1] if args[1] is not None else size
             step = args[2] if args[2] is not None else 1
             if i < 0:
-                i = self.vector_ptr.size() + i
+                i = size + i
             if j < 0:
-                j = self.vector_ptr.size() + j
+                j = size + j
             if (
                 0 <= i and
                 i <= j and
-                j < self.vector_ptr.size() and
+                j < size and
                 step > 0
             ):
                 slice_v = Vector()
@@ -205,7 +207,7 @@ cdef class Vector:
             elif (
                 0 <= j and
                 j <= i and
-                i < self.vector_ptr.size() and
+                i < size and
                 step < 0
             ):
                 slice_v = Vector()
@@ -256,17 +258,18 @@ cdef class Vector:
 
     cdef vector[int] *_slice_irregular(self, int start, int stop, int step):
         cdef vector[int] *slice_ptr = new vector[int]()
-        cdef int i
+        cdef int i, size
+        size = self.vector_ptr.size()
         if start < 0:
             i = 0
-        elif start >= self.vector_ptr.size():
-            start = self.vector_ptr.size()-1
+        elif start >= size:
+            i = size-1
         else:
             i = start
 
         if step > 0 and start < stop:
             while i < stop:
-                if 0 <= i and i < self.vector_ptr.size():
+                if 0 <= i and i < size:
                     slice_ptr.push_back(self.vector_ptr.at(i))
                 else:
                     break
@@ -274,7 +277,7 @@ cdef class Vector:
             return slice_ptr
         elif step < 0 and start > stop:
             while i > stop:
-                if 0 <= i and i < self.vector_ptr.size():
+                if 0 <= i and i < size:
                     slice_ptr.push_back(self.vector_ptr.at(i))
                 else:
                     break

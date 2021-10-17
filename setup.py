@@ -17,10 +17,10 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="five-one-one",
-    version="1.6.12",
+    version="1.6.13",
     author="ecowley",
     author_email="erik@stromsy.com",
-    description="a collection of data science helper functions",
+    description="a collection of helper methods",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     url="https://datascience.stromsy.com",
