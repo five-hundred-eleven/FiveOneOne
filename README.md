@@ -3,11 +3,14 @@
 This is a collection of utility methods.
 
 Install with:
-`pip install -i https://test.pypi.org/simple/ five-one-one`
+`pip install five-one-one`
 
 Import with:
+
 `import five_one_one`
+
 `from five_one_one.c import cfib`
+
 `from five_one_one.wrapper import Vector`
 
 If you are building the module, use:
