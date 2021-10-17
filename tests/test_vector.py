@@ -529,6 +529,21 @@ class test_vector(unittest.TestCase):
         k = -3
         self.assertVectorEqual(l[i:j:k], v.slice(i, j, k))
 
+    def test_slice_full(self):
+        l = list(range(100))
+        v = Vector(l)
+        self.assertVectorEqual(l[:], v.slice())
+
+    def test_slice_full_reverse(self):
+        l = list(range(100))
+        v = Vector(l)
+        self.assertVectorEqual(l[::-1], v.slice(step=-1))
+
+    def test_slice_full_alternate(self):
+        l = list(range(100))
+        v = Vector(l)
+        self.assertVectorEqual(l[::2], v.slice(step=2))
+
     def test_str_empty_vector(self):
         l = []
         v = Vector(l)
