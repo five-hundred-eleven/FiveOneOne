@@ -347,37 +347,6 @@ class test_vector(unittest.TestCase):
         v = Vector(l)
         self.assertEqual(l.index(3), v.index(3))
 
-    def test_slice_out_of_range_raises_IndexError(self):
-        l = []
-        v = Vector(l)
-        with self.assertRaises(IndexError):
-            v.slice(33)
-
-    def test_slice_1_arg(self):
-        l = list(range(10))
-        v = Vector(l)
-        self.assertEqual(l[5], v.slice(5))
-
-    def test_slice_1_arg_9(self):
-        l = list(range(10))
-        v = Vector(l)
-        self.assertEqual(l[9], v.slice(9))
-
-    def test_slice_1_neg_arg_1(self):
-        l = list(range(10))
-        v = Vector(l)
-        self.assertEqual(l[-1], v.slice(-1))
-
-    def test_slice_1_neg_arg_5(self):
-        l = list(range(10))
-        v = Vector(l)
-        self.assertEqual(l[-5], v.slice(-5))
-
-    def test_slice_1_neg_arg_10(self):
-        l = list(range(10))
-        v = Vector(l)
-        self.assertEqual(l[-10], v.slice(-10))
-
     def test_slice_3_6_1(self):
         l = list(range(100))
         v = Vector(l)
@@ -404,10 +373,24 @@ class test_vector(unittest.TestCase):
         v_slice = v.slice(i, j, k)
         self.assertVectorEqual(l_slice, v_slice)
 
+    def test_slice_3_30_neg_2(self):
+        l = list(range(100))
+        v = Vector(l)
+        i, j, k = 3, 30, -2
+        l_slice = l[i:j:k]
+        v_slice = v.slice(i, j, k)
+        self.assertVectorEqual(l_slice, v_slice)
+
     def test_slice_neg_60_60_2(self):
         l = list(range(100))
         v = Vector(l)
         i, j, k = -60, 60, 2
+        self.assertVectorEqual(l[i:j:k], v.slice(i, j, k))
+
+    def test_slice_neg_30_30_neg_2(self):
+        l = list(range(100))
+        v = Vector(l)
+        i, j, k = -30, 30, -2
         self.assertVectorEqual(l[i:j:k], v.slice(i, j, k))
 
     def test_slice_60_30_neg_2(self):

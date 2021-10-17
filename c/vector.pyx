@@ -180,90 +180,55 @@ cdef class Vector:
         raise ValueError()
 
 
-    def slice(self, *args):
-        cdef int i, j, size
+    def slice(self, start=None, stop=None, step=None):
+        cdef int start_i, stop_i, step_i, size
         size = self.vector_ptr.size()
-        if len(args) == 1:
-            i = args[0]
-            if 0 <= i and i < size:
-                return self.vector_ptr.at(i)
-            elif -size <= i and i < 0:
-                return self.vector_ptr.at(size+i)
-            else:
-                raise IndexError()
-        elif len(args) == 2:
-            i = args[0] if args[0] is not None else 0
-            j = args[1] if args[1] is not None else size
-            if i < 0:
-                i = size + i
-            if j < 0:
-                j = size + j
-            if (
-                0 <= i and
-                i <= j and
-                j <= size
-            ):
-                slice_v = Vector(init_internal=False)
-                slice_v.replace_internal(self._slice_single_step(i, j))
-                return slice_v
-            else:
-                slice_v = Vector(init_internal=False)
-                slice_v.replace_internal(self._slice_irregular(i, j, 1))
-                return slice_v
-        elif len(args) == 3:
 
-            step = args[2] if args[2] is not None else 1
+        step_i = step if step is not None else 1
 
-            if args[0] is not None:
-                i = args[0] if args[0] >= 0 else size+args[0]
-            elif step > 0:
-                i = 0
-            else: # step < 0
-                i = size
+        if start is not None:
+            start_i = start if start >= 0 else size+start
+        elif step_i > 0:
+            start_i = 0
+        else: # step_i < 0
+            start_i = size-1
 
-            if args[1] is not None:
-                j = args[1] if args[1] >= 0 else size+args[1]
-            elif step > 0:
-                j = size
-            else: # step < 0
-                j = -1
+        if stop is not None:
+            stop_i = stop if stop >= 0 else size+stop
+        elif step_i > 0:
+            stop_i = size
+        else: # step_i < 0
+            stop_i = -1
 
-            if (
-                0 <= i and
-                i <= j and
-                j <= size and
-                step > 0
-            ):
-                slice_v = Vector()
-                slice_v.replace_internal(self._slice_pos_step(i, j, step))
-                return slice_v
-            elif (
-                0 <= j and
-                j <= i and
-                i < size and
-                step < 0
-            ):
-                slice_v = Vector()
-                slice_v.replace_internal(self._slice_neg_step(i, j, step))
-                return slice_v
-            else:
-                slice_v = Vector(init_internal=False)
-                slice_v.replace_internal(self._slice_irregular(i, j, step))
-                return slice_v
-
-
-    cdef vector[int] *_slice_single_step(self, int start, int stop):
-        cdef vector[int] *slice_ptr = new vector[int](stop - start)
-        cdef int *data = slice_ptr.data()
-        cdef int i = 0
-        while start+i < stop:
-            data[i] = self.vector_ptr.at(start+i)
-            i += 1
-        return slice_ptr
+        if (
+            0 <= start_i and
+            start_i <= stop_i and
+            stop_i <= size and
+            step_i > 0
+        ):
+            slice_v = Vector()
+            print("slice_pos_step", start_i, stop_i, step_i)
+            slice_v.replace_internal(self._slice_pos_step(start_i, stop_i, step_i))
+            return slice_v
+        elif (
+            -1 <= stop_i and
+            stop_i <= start_i and
+            start_i < size and
+            step_i < 0
+        ):
+            slice_v = Vector()
+            print("slice_neg_step", start_i, stop_i, step_i)
+            slice_v.replace_internal(self._slice_neg_step(start_i, stop_i, step_i))
+            return slice_v
+        else:
+            slice_v = Vector(init_internal=False)
+            print("slice_irregular", start_i, stop_i, step_i)
+            slice_v.replace_internal(self._slice_irregular(start_i, stop_i, step_i))
+            return slice_v
 
 
     cdef vector[int] *_slice_pos_step(self, int start, int stop, int step):
-        cdef float size_f = start - stop
+        cdef float size_f = stop - start
         size_f /= step
         cdef int size_i = ceil(size_f)
         cdef vector[int] *slice_ptr = new vector[int](size_i)
@@ -280,14 +245,16 @@ cdef class Vector:
 
     cdef vector[int] *_slice_neg_step(self, int start, int stop, int step):
         cdef float size_f = start - stop
-        size_f /= step
+        size_f /= -step
         cdef int size_i = ceil(size_f)
+        print(size_i)
         cdef vector[int] *slice_ptr = new vector[int](size_i)
         cdef int *data = slice_ptr.data()
         cdef int i, j
         i = 0
         j = start
         while j > stop:
+            print(i, j)
             data[i] = self.vector_ptr.at(j)
             i += 1
             j += step
@@ -303,6 +270,7 @@ cdef class Vector:
             i = size-1
         else:
             i = start
+
 
         if step > 0 and start < stop:
             while i < stop:
