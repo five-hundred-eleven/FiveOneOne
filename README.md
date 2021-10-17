@@ -3,7 +3,7 @@
 This is a collection of utility methods.
 
 Install with:
-`pip install -i https://test.pypi.org/simple/ five-one-one`
+`pip install five-one-one`
 
 Import with:
 
