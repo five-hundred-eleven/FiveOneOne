@@ -207,7 +207,6 @@ cdef class Vector:
             step_i > 0
         ):
             slice_v = Vector()
-            print("slice_pos_step", start_i, stop_i, step_i)
             slice_v.replace_internal(self._slice_pos_step(start_i, stop_i, step_i))
             return slice_v
         elif (
@@ -217,12 +216,10 @@ cdef class Vector:
             step_i < 0
         ):
             slice_v = Vector()
-            print("slice_neg_step", start_i, stop_i, step_i)
             slice_v.replace_internal(self._slice_neg_step(start_i, stop_i, step_i))
             return slice_v
         else:
             slice_v = Vector(init_internal=False)
-            print("slice_irregular", start_i, stop_i, step_i)
             slice_v.replace_internal(self._slice_irregular(start_i, stop_i, step_i))
             return slice_v
 
@@ -247,14 +244,12 @@ cdef class Vector:
         cdef float size_f = start - stop
         size_f /= -step
         cdef int size_i = ceil(size_f)
-        print(size_i)
         cdef vector[int] *slice_ptr = new vector[int](size_i)
         cdef int *data = slice_ptr.data()
         cdef int i, j
         i = 0
         j = start
         while j > stop:
-            print(i, j)
             data[i] = self.vector_ptr.at(j)
             i += 1
             j += step

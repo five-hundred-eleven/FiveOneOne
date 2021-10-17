@@ -4,8 +4,10 @@ all:
 clean:
 	rm -rf dist/ build/ *.egg-info .fuse_hidden*
 
+install:
+	python setup.py install
+
 reinstall:
 	$(MAKE) clean
-	$(MAKE)
 	pip uninstall -y five-one-one
-	pip install dist/five_one_one*.whl
+	$(MAKE) install
