@@ -1,3 +1,9 @@
+"""
+Unittests for the Vector class (c/vector.pyx).
+Vector is a wrapper for the cpp vector container type, written in Cython. Vectors are currently
+only implemented for vector<int>. It uses the conventions of Python lists.
+"""
+
 import unittest
 import random
 
@@ -5,7 +11,12 @@ from five_one_one.wrapper import Vector
 
 
 class test_vector(unittest.TestCase):
+
     def assertVectorEqual(self, v1, v2):
+        """
+            Helper function for testing equality of two iterable type objects.
+        """
+        self.assertEqual(len(v1), len(v2))
         for m, n in zip(v1, v2):
             self.assertEqual(m, n)
 
@@ -391,7 +402,6 @@ class test_vector(unittest.TestCase):
         i, j, k = 3, 30, 2
         l_slice = l[i:j:k]
         v_slice = v.slice(i, j, k)
-        print(l_slice, v_slice)
         self.assertVectorEqual(l_slice, v_slice)
 
     def test_slice_neg_60_60_2(self):

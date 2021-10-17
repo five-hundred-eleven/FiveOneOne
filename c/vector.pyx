@@ -2,8 +2,31 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.algorithm cimport sort
 
+from math import ceil
+
 cdef bool reverse_cmp(int i, int j):
     return i > j;
+
+
+cdef class VectorIter:
+    
+    cdef vector[int] *_v
+    cdef int _i
+
+    def __cinit__(self, ):
+        self._i = 0
+
+    cdef void replace_internal(self, vector[int] *new_vector):
+        self._v = new_vector
+
+    def __next__(self):
+        cdef int size = self._v.size()
+        if self._i < size:
+            res = self._v.at(self._i)
+            self._i += 1
+            return res
+        else:
+            raise StopIteration
 
 
 cdef class Vector:
@@ -178,7 +201,7 @@ cdef class Vector:
             if (
                 0 <= i and
                 i <= j and
-                j < size
+                j <= size
             ):
                 slice_v = Vector(init_internal=False)
                 slice_v.replace_internal(self._slice_single_step(i, j))
@@ -188,17 +211,27 @@ cdef class Vector:
                 slice_v.replace_internal(self._slice_irregular(i, j, 1))
                 return slice_v
         elif len(args) == 3:
-            i = args[0] if args[0] is not None else 0
-            j = args[1] if args[1] is not None else size
+
             step = args[2] if args[2] is not None else 1
-            if i < 0:
-                i = size + i
-            if j < 0:
-                j = size + j
+
+            if args[0] is not None:
+                i = args[0] if args[0] >= 0 else size+args[0]
+            elif step > 0:
+                i = 0
+            else: # step < 0
+                i = size
+
+            if args[1] is not None:
+                j = args[1] if args[1] >= 0 else size+args[1]
+            elif step > 0:
+                j = size
+            else: # step < 0
+                j = -1
+
             if (
                 0 <= i and
                 i <= j and
-                j < size and
+                j <= size and
                 step > 0
             ):
                 slice_v = Vector()
@@ -230,8 +263,10 @@ cdef class Vector:
 
 
     cdef vector[int] *_slice_pos_step(self, int start, int stop, int step):
-        cdef int size = (stop - start) // step
-        cdef vector[int] *slice_ptr = new vector[int](size)
+        cdef float size_f = start - stop
+        size_f /= step
+        cdef int size_i = ceil(size_f)
+        cdef vector[int] *slice_ptr = new vector[int](size_i)
         cdef int *data = slice_ptr.data()
         cdef int i, j
         i = 0
@@ -244,8 +279,10 @@ cdef class Vector:
 
 
     cdef vector[int] *_slice_neg_step(self, int start, int stop, int step):
-        cdef int size = (start - stop) // -step
-        cdef vector[int] *slice_ptr = new vector[int](size)
+        cdef float size_f = start - stop
+        size_f /= step
+        cdef int size_i = ceil(size_f)
+        cdef vector[int] *slice_ptr = new vector[int](size_i)
         cdef int *data = slice_ptr.data()
         cdef int i, j
         i = 0
@@ -296,21 +333,6 @@ cdef class Vector:
 
 
     def __iter__(self):
-        return VectorIter(self)
-
-
-class VectorIter:
-    
-
-    def __init__(self, v):
-        self._vector = v
-        self._i = 0
-
-
-    def __next__(self):
-        if self._i < len(self._vector):
-            res = self._vector[self._i]
-            self._i += 1
-            return res
-        else:
-            raise StopIteration
+        v_i = VectorIter()
+        v_i.replace_internal(self.vector_ptr)
+        return v_i
