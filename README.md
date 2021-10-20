@@ -1,9 +1,8 @@
 # Five One One
 
-This is a collection of utility methods.
+This is a collection of utility methods that are related to pandas dataframes, NLP, and general purpose programming.
 
-Install with:
-`pip install five-one-one`
+Currently five-one-one can only be installed with `make install` or `python setup.py install`.
 
 Import with:
 
