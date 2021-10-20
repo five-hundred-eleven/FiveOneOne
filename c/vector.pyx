@@ -4,19 +4,19 @@ from libcpp.algorithm cimport sort
 
 from math import ceil
 
-cdef bool reverse_cmp(int i, int j):
+cdef bool reverse_cmp_float(float i, float j):
     return i > j;
 
 
 cdef class VectorIter:
     
-    cdef vector[int] *_v
+    cdef vector[float] *_v
     cdef int _i
 
-    def __cinit__(self, ):
+    def __cinit__(self):
         self._i = 0
 
-    cdef void replace_internal(self, vector[int] *new_vector):
+    cdef void replace_internal(self, vector[float] *new_vector):
         self._v = new_vector
 
     def __next__(self):
@@ -31,28 +31,45 @@ cdef class VectorIter:
 
 cdef class Vector:
 
-    cdef vector[int] *vector_ptr;
+    cdef vector[float] *vector_ptr
 
     def __cinit__(self, *args, init_internal=True):
-        cdef int ix
+        cdef int size
+        cdef float fx
         if init_internal:
-            self.vector_ptr = new vector[int]();
+            if len(args) == 0:
+                self.vector_ptr = new vector[float]();
+            elif len(args) == 1:
+                try:
+                    other = args[0]
+                    size = len(other)
+                    self.vector_ptr = new vector[float](size)
+                    data = self.vector_ptr.data()
+                    i = 0
+                    for x in other:
+                        fx = x
+                        data[i] = fx
+                        i += 1
+                except TypeError:
+                    self.vector_ptr = new vector[float]()
+                    for x in other:
+                        fx = x
+                        self.vector_ptr.push_back(fx)
+            else:
+                raise TypeError()
         else:
             return
-        
-        if len(args) == 0:
-            return
-        elif len(args) == 1:
-            other = args[0]
-            for x in other:
-                ix = x
-                self.vector_ptr.push_back(ix)
+
+
+    def __setitem__(self, int i, float x):
+        cdef int size = self.vector_ptr.size()
+        cdef float *data = self.vector_ptr.data()
+        if 0 <= i and i < size:
+            data[i] = x
+        elif -size <= i and i < 0:
+            data[size+i] = x
         else:
-            raise TypeError()
-
-
-    cdef void replace_internal(self, vector[int] *other):
-        self.vector_ptr = other
+            raise IndexError()
 
 
     def __dealloc__(self):
@@ -63,33 +80,155 @@ cdef class Vector:
         return self.vector_ptr.size()
 
 
-    def __getitem__(self, int i):
+    def __iter__(self):
+        v_i = VectorIter()
+        v_i.replace_internal(self.vector_ptr)
+        return v_i
+
+
+    def __getitem__(self, i):
+
         cdef int size = self.vector_ptr.size()
-        if 0 <= i and i < size:
-            return self.vector_ptr.at(i)
-        elif -size <= i and i < 0:
-            return self.vector_ptr.at(size+i)
+
+        if type(i) is int:
+            if 0 <= i and i < size:
+                return self.vector_ptr.at(i)
+            elif -size <= i and i < 0:
+                return self.vector_ptr.at(size+i)
+            else:
+                raise IndexError()
+
+        elif isinstance(i, slice):
+
+            step = i.step if i.step is not None else 1
+
+            if i.start is not None:
+                start = i.start if i.start >= 0 else size+i.start
+            elif step > 0:
+                start = 0
+            else: # step < 0
+                start = size-1
+
+            if i.stop is not None:
+                stop = i.stop if i.stop >= 0 else size+i.stop
+            elif step > 0:
+                stop = size
+            else: # step < 0
+                stop = -1
+
+            return self._slice(start, stop, step)
+
         else:
-            raise IndexError()
+            raise TypeError()
 
 
-    def __setitem__(self, int i, int x):
+    def __str__(self):
+        return str(list(self))
+
+
+    def __repr__(self):
+        return "Vector(" + str(self) + ")"
+
+
+    cdef _slice(self, int start, int stop, int step):
+        """
+            Should be considered dangerous to call besides for in __getitem__.
+        """
+        cdef vector[float] *slice_ptr
         cdef int size = self.vector_ptr.size()
-        cdef int *data = self.vector_ptr.data()
-        if 0 <= i and i < size:
-            data[i] = x
-        elif -size <= i and i < 0:
-            data[size+i] = x
+
+        if (
+            0 <= start and
+            start <= stop and
+            stop <= size and
+            step > 0
+        ):
+            slice_ptr = self._slice_pos_step(start, stop, step)
+        elif (
+            -1 <= stop and
+            stop <= start and
+            start < size and
+            step < 0
+        ):
+            slice_ptr = self._slice_neg_step(start, stop, step)
         else:
-            raise IndexError()
+            slice_ptr = self._slice_irregular(start, stop, step)
+
+        slice_v = Vector(init_internal=False)
+        slice_v.replace_internal(slice_ptr)
+        return slice_v
 
 
-    def append(self, int x):
-        self.vector_ptr.push_back(x)
+    cdef vector[float] *_slice_pos_step(self, int start, int stop, int step):
+        cdef float size_f = stop - start
+        size_f /= step
+        cdef int size_i = ceil(size_f)
+        cdef vector[float] *slice_ptr = new vector[float](size_i)
+        cdef float *data = slice_ptr.data()
+        cdef int i, j
+        i = 0
+        j = start
+        while j < stop:
+            data[i] = self.vector_ptr.at(j)
+            i += 1
+            j += step
+        return slice_ptr
+
+
+    cdef vector[float] *_slice_neg_step(self, int start, int stop, int step):
+        cdef float size_f = start - stop
+        size_f /= -step
+        cdef int size_i = ceil(size_f)
+        cdef vector[float] *slice_ptr = new vector[float](size_i)
+        cdef float *data = slice_ptr.data()
+        cdef int i, j
+        i = 0
+        j = start
+        while j > stop:
+            data[i] = self.vector_ptr.at(j)
+            i += 1
+            j += step
+        return slice_ptr
+
+
+    cdef vector[float] *_slice_irregular(self, int start, int stop, int step):
+        cdef vector[float] *slice_ptr = new vector[float]()
+        cdef int i, size
+        size = self.vector_ptr.size()
+        if start < 0:
+            i = 0
+        elif start >= size:
+            i = size-1
+        else:
+            i = start
+
+        if step > 0 and start < stop:
+            while i < stop:
+                if 0 <= i and i < size:
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                else:
+                    break
+                i += step
+            return slice_ptr
+        elif step < 0 and start > stop:
+            while i > stop:
+                if 0 <= i and i < size:
+                    slice_ptr.push_back(self.vector_ptr.at(i))
+                else:
+                    break
+                i += step
+            return slice_ptr
+        else:
+            return slice_ptr
+
+
+    cdef void replace_internal(self, vector[float] *other):
+        self.vector_ptr = other
 
 
     def pop(self, *args):
-        cdef int item, pos, size
+        cdef int pos, size
+        cdef float item
         size = self.vector_ptr.size()
         if len(args) == 0:
             if size > 0:
@@ -114,29 +253,49 @@ cdef class Vector:
             raise TypeError("pop expected at most 1 argument")
 
 
+    def append(self, float x):
+        self.vector_ptr.push_back(x)
+
+
     def extend(self, other):
-        for x in other:
-            self.vector_ptr.push_back(x)
+        cdef int size, other_size, i
+        cdef float *data, fx
+        size = self.vector_ptr.size()
+        try:
+            other_size = len(other)
+            self.vector_ptr.resize(size+other_size)
+            data = self.vector_ptr.data()
+            i = size
+            for x in other:
+                fx = x
+                data[i] = fx
+                i += 1
+        except TypeError:
+            for x in other:
+                self.vector_ptr.push_back(x)
 
 
-    def sort(self, reverse=False):
-        if not reverse:
-            sort(self.vector_ptr.begin(), self.vector_ptr.end())
-        else:
-            sort(self.vector_ptr.begin(), self.vector_ptr.end(), reverse_cmp)
+    def count(self, float x):
+        cdef int i = 0
+        cdef int size = self.vector_ptr.size()
+        res = 0
+        while i < size:
+            if self.vector_ptr.at(i) == x:
+                res += 1
+            i += 1
+        return res
 
 
-    def reverse(self):
-        cdef vector[int] *reversed = new vector[int]()
+    def index(self, float x):
         cdef unsigned i = 0
         while i < self.vector_ptr.size():
-            reversed.push_back(self.vector_ptr.at(self.vector_ptr.size() - i - 1))
+            if self.vector_ptr.at(i) == x:
+                return i
             i += 1
-        del self.vector_ptr
-        self.vector_ptr = reversed
+        raise ValueError()
 
 
-    def remove(self, int x):
+    def remove(self, float x):
         cdef unsigned i = 0
         while i < self.vector_ptr.size():
             if self.vector_ptr.at(i) == x:
@@ -146,7 +305,7 @@ cdef class Vector:
         raise ValueError()
 
 
-    def insert(self, int i, int x):
+    def insert(self, int i, float x):
         cdef int size = self.vector_ptr.size()
         if 0 <= i and i <= size:
             self.vector_ptr.insert(self.vector_ptr.begin()+i, x)
@@ -156,146 +315,25 @@ cdef class Vector:
             raise IndexError()
 
 
+    def reverse(self):
+        cdef int size = self.vector_ptr.size()
+        cdef int i = 0
+        cdef vector[float] *reversed_ptr = new vector[float](size)
+        cdef float *reversed_data = reversed_ptr.data()
+        while i < size:
+            reversed_data[i] = self.vector_ptr.at(size-i-1)
+            i += 1
+        del self.vector_ptr
+        self.vector_ptr = reversed_ptr
+
+
+    def sort(self, reverse=False):
+        if not reverse:
+            sort(self.vector_ptr.begin(), self.vector_ptr.end())
+        else:
+            sort(self.vector_ptr.begin(), self.vector_ptr.end(), reverse_cmp_float)
+
+
     def clear(self):
         del self.vector_ptr
-        self.vector_ptr = new vector[int]()
-
-
-    def count(self, int x):
-        cdef unsigned i = 0
-        res = 0
-        while i < self.vector_ptr.size():
-            if self.vector_ptr.at(i) == x:
-                res += 1
-            i += 1
-        return res
-
-
-    def index(self, int x):
-        cdef unsigned i = 0
-        while i < self.vector_ptr.size():
-            if self.vector_ptr.at(i) == x:
-                return i
-            i += 1
-        raise ValueError()
-
-
-    def slice(self, start=None, stop=None, step=None):
-        cdef int start_i, stop_i, step_i, size
-        size = self.vector_ptr.size()
-
-        step_i = step if step is not None else 1
-
-        if start is not None:
-            start_i = start if start >= 0 else size+start
-        elif step_i > 0:
-            start_i = 0
-        else: # step_i < 0
-            start_i = size-1
-
-        if stop is not None:
-            stop_i = stop if stop >= 0 else size+stop
-        elif step_i > 0:
-            stop_i = size
-        else: # step_i < 0
-            stop_i = -1
-
-        if (
-            0 <= start_i and
-            start_i <= stop_i and
-            stop_i <= size and
-            step_i > 0
-        ):
-            slice_v = Vector()
-            slice_v.replace_internal(self._slice_pos_step(start_i, stop_i, step_i))
-            return slice_v
-        elif (
-            -1 <= stop_i and
-            stop_i <= start_i and
-            start_i < size and
-            step_i < 0
-        ):
-            slice_v = Vector()
-            slice_v.replace_internal(self._slice_neg_step(start_i, stop_i, step_i))
-            return slice_v
-        else:
-            slice_v = Vector(init_internal=False)
-            slice_v.replace_internal(self._slice_irregular(start_i, stop_i, step_i))
-            return slice_v
-
-
-    cdef vector[int] *_slice_pos_step(self, int start, int stop, int step):
-        cdef float size_f = stop - start
-        size_f /= step
-        cdef int size_i = ceil(size_f)
-        cdef vector[int] *slice_ptr = new vector[int](size_i)
-        cdef int *data = slice_ptr.data()
-        cdef int i, j
-        i = 0
-        j = start
-        while j < stop:
-            data[i] = self.vector_ptr.at(j)
-            i += 1
-            j += step
-        return slice_ptr
-
-
-    cdef vector[int] *_slice_neg_step(self, int start, int stop, int step):
-        cdef float size_f = start - stop
-        size_f /= -step
-        cdef int size_i = ceil(size_f)
-        cdef vector[int] *slice_ptr = new vector[int](size_i)
-        cdef int *data = slice_ptr.data()
-        cdef int i, j
-        i = 0
-        j = start
-        while j > stop:
-            data[i] = self.vector_ptr.at(j)
-            i += 1
-            j += step
-        return slice_ptr
-
-    cdef vector[int] *_slice_irregular(self, int start, int stop, int step):
-        cdef vector[int] *slice_ptr = new vector[int]()
-        cdef int i, size
-        size = self.vector_ptr.size()
-        if start < 0:
-            i = 0
-        elif start >= size:
-            i = size-1
-        else:
-            i = start
-
-
-        if step > 0 and start < stop:
-            while i < stop:
-                if 0 <= i and i < size:
-                    slice_ptr.push_back(self.vector_ptr.at(i))
-                else:
-                    break
-                i += step
-            return slice_ptr
-        elif step < 0 and start > stop:
-            while i > stop:
-                if 0 <= i and i < size:
-                    slice_ptr.push_back(self.vector_ptr.at(i))
-                else:
-                    break
-                i += step
-            return slice_ptr
-        else:
-            return slice_ptr
-
-
-    def __str__(self):
-        return str(list(self))
-
-
-    def __repr__(self):
-        return "Vector(" + str(self) + ")"
-
-
-    def __iter__(self):
-        v_i = VectorIter()
-        v_i.replace_internal(self.vector_ptr)
-        return v_i
+        self.vector_ptr = new vector[float]()
