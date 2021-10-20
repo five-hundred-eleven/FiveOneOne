@@ -89,6 +89,7 @@ cdef class Vector:
     def __getitem__(self, i):
 
         cdef int size = self.vector_ptr.size()
+        cdef vector[float] *new_ptr
 
         if type(i) is int:
             if 0 <= i and i < size:
@@ -117,6 +118,15 @@ cdef class Vector:
                 stop = -1
 
             return self._slice(start, stop, step)
+
+        elif isinstance(i, Vector):
+            new_ptr = new vector[float]()
+            for x, is_include in zip(self, i):
+                if is_include != 0.:
+                    new_ptr.push_back(x)
+            v = Vector(init_internal=False)
+            v.replace_internal(new_ptr)
+            return v
 
         else:
             raise TypeError()
@@ -337,3 +347,25 @@ cdef class Vector:
     def clear(self):
         del self.vector_ptr
         self.vector_ptr = new vector[float]()
+
+    
+    def __eq__(self, other):
+        cdef int i, size
+        i = 0
+        size = self.vector_ptr.size()
+        cdef vector[float] *res = new vector[float](size)
+        cdef float *data = res.data()
+
+        v = Vector(init_internal=False)
+        v.replace_internal(res)
+
+        if hasattr(other, "__getitem__"):
+            while i < size:
+                data[i] = 1. if self[i] == other[i] else 0.
+                i += 1
+        elif type(other) in (float, int):
+            while i < size:
+                data[i] = 1. if self[i] == other else 0.
+                i += 1
+
+        return v

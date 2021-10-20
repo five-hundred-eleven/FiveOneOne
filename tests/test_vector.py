@@ -547,6 +547,20 @@ class test_vector(unittest.TestCase):
         v = Vector(l)
         self.assertVectorEqual(l[::2], v[::2])
 
+    def test_slice_vector_index(self):
+        l = self.vectorize(range(10))
+        v = Vector(l)
+        l = self.vectorize(range(0, 10, 2))
+        indices = Vector([1., 0.]*5)
+        self.assertVectorEqual(v[indices], l)
+
+    def test_eq_operator(self):
+        v1 = Vector([1., 2., 3., 4., 5.])
+        v2 = Vector([3., 2., 3., 4., 5.])
+        res = self.vectorize([0., 1., 1., 1., 1.])
+        self.assertVectorEqual(res, v1 == v2)
+
+
     def test_str_empty_vector(self):
         l = []
         v = Vector(l)
